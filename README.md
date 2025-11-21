@@ -52,6 +52,9 @@ For people who just want to skim the important code without digging through the 
 - Stats client (gRPC connection to Xray-core’s StatsService)  
   <a href="./android/app/src/main/java/com/cryptostorm/xray/XrayStatsClient.kt">android/app/src/main/java/com/cryptostorm/xray/XrayStatsClient.kt</a>
 
+- All UI text/strings (makes adding new translations easier)  
+  <a href="./android/app/src/main/assets/i18n/strings.json">android/app/src/main/assets/i18n/strings.json</a>
+
 ### Native side (Go + C/JNI + patch)
 
 - Go wrapper around Xray-core (builds as libxray.so)  
