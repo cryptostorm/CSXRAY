@@ -1,0 +1,52 @@
+diff --git a/transport/internet/system_dialer.go b/transport/internet/system_dialer.go
+index ceb6ebc9..00000000 100644
+--- a/transport/internet/system_dialer.go
++++ b/transport/internet/system_dialer.go
+@@ -1,5 +1,10 @@
+ package internet
+
++/*
++void XrayNotifyActive(void);
++*/
++import "C"
++
+ import (
+        "context"
+        "math/rand"
+@@ -139,7 +144,9 @@ func (d *DefaultSystemDialer) Dial(ctx context.Context, src net.Address, dest ne
+                                }
+                        })
+                }
+        }
+-
++       // Notify Android UI that we are actively dialing/connecting.
++       C.XrayNotifyActive()
+        return dialer.DialContext(ctx, dest.Network.SystemString(), dest.NetAddr())
+ }
+diff --git a/proxy/dokodemo/dokodemo.go b/proxy/dokodemo/dokodemo.go
+index 70658898..00000000 100644
+--- a/proxy/dokodemo/dokodemo.go
++++ b/proxy/dokodemo/dokodemo.go
+@@ -1,6 +1,12 @@
+ package dokodemo
+
++/*
++void XrayNotifyListening(void);
++*/
++import "C"
++
+ import (
+        "context"
+        "runtime"
+@@ -71,6 +77,10 @@ func (d *DokodemoDoor) policy() policy.Session {
+ }
+
+ // Process implements proxy.Inbound.
+ func (d *DokodemoDoor) Process(ctx context.Context, network net.Network, conn stat.Connection, dispatcher routing.Dispatcher) error {
++       // When this inbound finishes for any reason (disconnect, timeout, error),
++       // flip UI back to “LISTENING”.
++       defer C.XrayNotifyListening()
++
+        errors.LogDebug(ctx, "processing connection from: ", conn.RemoteAddr())
+        dest := net.Destination{
+                Network: network,

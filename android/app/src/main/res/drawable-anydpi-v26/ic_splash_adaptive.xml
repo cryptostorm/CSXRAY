@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Transparent background so you only see the globe/foreground -->
+    <background android:drawable="@android:color/transparent"/>
+    <!-- Reuse the foreground from your app icon -->
+    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+    <!-- Optional if present -->
+    <monochrome android:drawable="@mipmap/ic_launcher_monochrome"/>
+</adaptive-icon>

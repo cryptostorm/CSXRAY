@@ -1,0 +1,13 @@
+<resources>
+    <!-- Base app theme -->
+    <style name="Theme.CSXRAY" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/greycyan</item>
+    </style>
+
+    <!-- Android 12+ splash theme: keep your bg + icon here, but DO NOT set this on MainActivity -->
+    <style name="Theme.CSXRAY.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/greycyan</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.CSXRAY</item>
+    </style>
+</resources>

@@ -1,0 +1,15 @@
+# Android Studio / Gradle
+.gradle/
+.idea/
+local.properties
+*.iml
+
+# Build outputs
+app/build/
+*/build/
+*.apk
+*.aab
+
+# Native build artifacts
+native/*.so
+native/*/libxray*.so

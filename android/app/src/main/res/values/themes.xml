@@ -1,0 +1,11 @@
+<resources>
+    <!-- Base app theme -->
+    <style name="Theme.CSXRAY" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/greycyan</item>
+    </style>
+
+    <!-- Legacy devices (<31): this splash theme supplies the bg only when you explicitly use it -->
+    <style name="Theme.CSXRAY.Splash" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/greycyan</item>
+    </style>
+</resources>
