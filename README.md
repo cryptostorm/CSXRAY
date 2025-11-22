@@ -20,6 +20,8 @@ See <a href="https://cryptostorm.is/blog/xray" target="_blank">https://cryptosto
 - android/ – Android Studio project.
   - app/ – Single app module with Kotlin source, resources, and manifest.
 - native/ – Native integration for Xray-core (Go wrapper, JNI shim, build script, and patch file).
+- CHANGELOG.md – A log of changes made to this app.
+- LICENSE – This app uses the MIT license and Xray-core uses <a href="https://www.mozilla.org/en-US/MPL/2.0/" target="_blank">MPL-2.0</a>.
 
 The app code lives under:
 
