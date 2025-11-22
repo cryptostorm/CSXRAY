@@ -363,22 +363,48 @@ data class ServerInfo(
     val wgSlug: String
 )
 
-/** IPv6 detector that ignores VPN and looks across Wi-Fi/Cellular/Ethernet
- *  since we know the VPN interface will support IPv6, but we need to know if the
- *  network actually has the ability to route IPv6 to the internet.
- * */
+/** IPv6 detector that ignores VPN and looks across Wi-Fi/Cellular/Ethernet.
+ *  We only return true if:
+ *   - the network is INTERNET + VALIDATED (so Android thinks it can reach the net)
+ *   - there is a non-link-local global IPv6 address
+ *   - there is a default IPv6 route
+ */
 private fun hasGlobalIPv6(cm: ConnectivityManager): Boolean {
     for (net in cm.allNetworks) {
         val caps = cm.getNetworkCapabilities(net) ?: continue
+
+        // Ignore the VPN interface itself
         if (caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) continue
+
+        // Must be a real internet-capable uplink and validated by Android
+        if (!caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) continue
+        if (!caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)) continue
+
+        // Only care about normal uplinks
         if (!caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
             && !caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
-        && !caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) continue
+            && !caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+        ) continue
+
         val lp: LinkProperties = cm.getLinkProperties(net) ?: continue
-        if (lp.linkAddresses.any { la ->
+
+        // 1) Do we have a global (non-link-local) v6 address?
+        val hasGlobalAddr = lp.linkAddresses.any { la ->
             val a = la.address
-            a is Inet6Address && !a.isLinkLocalAddress && !a.isLoopbackAddress && !a.isAnyLocalAddress
-        }) return true
+            a is Inet6Address &&
+                    !a.isLinkLocalAddress &&
+                    !a.isLoopbackAddress &&
+                    !a.isAnyLocalAddress
+        }
+
+        if (!hasGlobalAddr) continue
+
+        // 2) Do we have a default IPv6 route?
+        val hasDefaultV6Route = lp.routes.any { r ->
+            r.isDefaultRoute && (r.destination.address is Inet6Address)
+        }
+
+        if (hasDefaultV6Route) return true
     }
     return false
 }
@@ -631,6 +657,72 @@ fun ConfigGeneratorUI(
     val promotedFromStatsOnce = remember { mutableStateOf(false) }
     // Config editor UI state
     var showConfigEditor by remember { mutableStateOf(false) }
+
+    /** Returns a human-readable reason why IPv6 is not considered usable.
+     *  If IPv6 *is* usable, returns null.
+     */
+    fun ipv6DebugReason(cm: ConnectivityManager): String? {
+        for (net in cm.allNetworks) {
+            val caps = cm.getNetworkCapabilities(net) ?: continue
+            if (caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) continue
+
+            // Check transports of interest
+            if (!caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+                && !caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+                && !caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+            ) continue
+
+            val lp = cm.getLinkProperties(net) ?: continue
+
+            // IPv6 address check
+            val hasGlobalAddr = lp.linkAddresses.any { la ->
+                val a = la.address
+                a is Inet6Address &&
+                        !a.isLinkLocalAddress &&
+                        !a.isLoopbackAddress &&
+                        !a.isAnyLocalAddress
+            }
+            if (!hasGlobalAddr) return "no global IPv6 address"
+
+            // INTERNET capability missing
+            if (!caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET))
+                return "no INTERNET capability"
+
+            // VALIDATED missing → Android says this network can't reach the internet
+            if (!caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED))
+                return "network not validated (no IPv6 reachability)"
+
+            // Default IPv6 route missing
+            val hasDefaultV6Route = lp.routes.any { r ->
+                r.isDefaultRoute && (r.destination.address is Inet6Address)
+            }
+            if (!hasDefaultV6Route) return "no default IPv6 route"
+
+            // If we got here, this network looks good.
+            return null
+        }
+
+        return "no suitable network (Wi-Fi/Cellular/Ethernet) found"
+    }
+
+    // If IPv6 disappears while we're idle, force UI + prefs back to IPv4.
+    // This prevents getting stuck on a previously-selected v6 mode.
+    LaunchedEffect(ipv6Available) {
+        if (!ipv6Available && ipVersion == 6 && !isRunning.value) {
+
+            val reason = ipv6DebugReason(cm) ?: "unknown reason"
+
+            logOutput.value += "[net] IPv6 unavailable: $reason\n"
+            logOutput.value += "[net] switching to IPv4\n"
+
+            ipVersion = 4
+            prefs.edit().putInt(PREF_KEY_IPVER, 4).apply()
+
+            if (selectedServer == null) {
+                customIp = customIpV4
+            }
+        }
+    }
 
     // ───────── App update prompt UI state ─────────
     var showUpdateDialog by remember { mutableStateOf(false) }
