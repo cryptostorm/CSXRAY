@@ -2142,7 +2142,7 @@ private fun buildDefaultConfigJson(
   "outbounds": [{
       "protocol": "vless", "settings": { "vnext": [{
         "address": "$selectedAddress", "port": $portStr,
-        "users": [{ "id": "8020ebb3-7ec9-4bf2-a5a3-ee13f3c480e9", "encryption": "none" }]
+        "users": [{ "id": "b38321c5-ccdd-432c-9f68-6e931f7df16f", "encryption": "none", "flow": "xtls-rprx-vision-udp443" }]
       }]},
       "streamSettings": { "network": "tcp", "security": "reality",
         "realitySettings": { "serverName": "cloudflare.com", "fingerprint": "chrome",
